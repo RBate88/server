@@ -50,6 +50,7 @@ use OC\Files\Cache\CacheEntry;
 use OC\Files\ObjectStore\S3ConnectionTrait;
 use OC\Files\ObjectStore\S3ObjectTrait;
 use OCP\Constants;
+use \OCP\Files\StorageNotAvailableException;
 
 class AmazonS3 extends \OC\Files\Storage\Common {
 	use S3ConnectionTrait;
@@ -371,8 +372,17 @@ class AmazonS3 extends \OC\Files\Storage\Common {
 		} catch (S3Exception $e) {
 			\OC::$server->getLogger()->logException($e, ['app' => 'files_external']);
 			return false;
+		} catch (\Exception $e) {
+                    if (strpos($e->getMessage(), "423 Locked") !== false) {
+			\OC::$server->getLogger()->logException($e, ['app' => 'files_external']);
+                        throw new StorageNotAvailableException(
+                            'Airgap is active',
+                            StorageNotAvailableException::STATUS_INDETERMINATE
+                        );
+		    					}
+                    throw $e;
+									}
 		}
-	}
 
 	public function stat($path) {
 		$path = $this->normalizePath($path);
@@ -671,10 +681,21 @@ class AmazonS3 extends \OC\Files\Storage\Common {
 	}
 
 	public function test() {
-		$this->getConnection()->headBucket([
-			'Bucket' => $this->bucket
-		]);
-		return true;
+		try {
+				    $this->getConnection()->headBucket([
+					    'Bucket' => $this->bucket
+				    ]);
+				    return true;
+				} catch (\Exception $e) {
+		                    if (strpos($e->getMessage(), "423 Locked") !== false) {
+		                        throw new StorageNotAvailableException(
+		                            'Airgap is active',
+		                            StorageNotAvailableException::STATUS_INDETERMINATE
+		                        );
+				    } else {
+				        throw $e;
+				    }
+				}
 	}
 
 	public function getId() {

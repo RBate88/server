@@ -158,7 +158,7 @@ OCA.Files_External.StatusManager = {
 				},
 				error: function (jqxhr, state, error) {
 					self.mountPointList = [];
-					OC.Notification.show(t('files_external', 'Couldn\'t get the list of external mount points: {type}', 
+					OC.Notification.show(t('files_external', 'Couldn\'t get the list of external mount points: {type}',
 						{type: error}), {type: 'error'}
 					);
 				},
@@ -182,6 +182,8 @@ OCA.Files_External.StatusManager = {
 					if (mountData.userProvided || mountData.authMechanism === 'password::global::user') {
 						// personal mount whit credentials problems
 						this.showCredentialsDialog(name, mountData);
+          } else if (allMountStatus[name].status == 2) {
+            OC.dialogs.info(t('files_external', 'The air gap for this folder is currently active.  Please disable the air gap to access.'), t('files_external', 'Air gap active'), function (e) {})
 					} else {
 						OC.dialogs.confirm(t('files_external', 'There was an error with message: ') + mountData.error + '. Do you want to review mount point config in admin settings page?', t('files_external', 'External mount error'), function (e) {
 							if (e === true) {
@@ -268,7 +270,7 @@ OCA.Files_External.StatusManager = {
 			// check if we have a list first
 			if (list === undefined && !self.emptyWarningShown) {
 				self.emptyWarningShown = true;
-				OC.Notification.show(t('files_external', 'Couldn\'t fetch list of Windows network drive mount points: Empty response from server'), 
+				OC.Notification.show(t('files_external', 'Couldn\'t fetch list of Windows network drive mount points: Empty response from server'),
 					{type: 'error'}
 				);
 				return;
